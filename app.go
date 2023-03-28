@@ -7,7 +7,17 @@ import (
 	"io/ioutil"
 	"regexp"
 	"fmt"
+	"github.com/nleeper/goment"
 )
+
+func createCurrDateString() {
+	d, err := goment.New()
+	if err != nil {
+		fmt.Println("error with goment")
+	}
+
+	fmt.Println(d.Format("YYYY-MM-DD"))
+}
 
 func checkContributionFromHtml() {
 	resp, err := http.Get("https://github.com/xavier-kong/")
