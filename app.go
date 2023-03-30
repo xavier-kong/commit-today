@@ -39,10 +39,6 @@ func checkContributionFromHtml() {
 func createRouter() *gin.Engine {
 	r := gin.Default()
 
-	r.GET("/ping", func(c *gin.Context) {
-		c.String(http.StatusOK, "pong")
-	})
-
 	r.POST("/commit", func(c *gin.Context) {
 		// handle webhook
 		// https://docs.github.com/en/webhooks-and-events/webhooks/creating-webhooks#setting-up-a-webhook
