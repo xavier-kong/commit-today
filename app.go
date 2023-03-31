@@ -2,12 +2,16 @@ package main
 
 import (
 	"net/http"
+	"context"
 	"github.com/gin-gonic/gin"
 	"log"
 	"io/ioutil"
 	"regexp"
 	"fmt"
 	"github.com/nleeper/goment"
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
+	"encoding/json"
 )
 
 func createCurrDateString() {
@@ -40,15 +44,32 @@ func createRouter() *gin.Engine {
 	r := gin.Default()
 
 	r.POST("/commit", func(c *gin.Context) {
+
 		// handle webhook
-		// https://docs.github.com/en/webhooks-and-events/webhooks/creating-webhooks#setting-up-a-webhook
 
 	})
 
 	return r
 }
 
+type DbEntry struct {
+	Date string
+	Repo string
+	NumCommits int16
+}
+
+type RequestBody struct {
+	idk string
+}
+
+func HandleWebhookRequest(ctx context.Context, requestBody RequestBody) {
+	lc, _:= lambdacontext.FromContext(ctx)
+	body, err := json.MarshalIndent(requestBody)
+}
+
+// https://docs.github.com/en/webhooks-and-events/webhooks/creating-webhooks#setting-up-a-webhook
 func main() {
 	router := createRouter()
 	router.Run(":8080")
+	lambda.Start(HandleWebhookRequest)
 }
