@@ -3,14 +3,13 @@ package main
 import (
 	"net/http"
 	"context"
-	"github.com/gin-gonic/gin"
 	"log"
 	"io/ioutil"
 	"regexp"
 	"fmt"
 	"github.com/nleeper/goment"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-lambda-go/lambdacontext"
+	"github.com/aws/aws-lambda-go/events"
 	"encoding/json"
 )
 
@@ -40,18 +39,6 @@ func checkContributionFromHtml() {
 
 }
 
-func createRouter() *gin.Engine {
-	r := gin.Default()
-
-	r.POST("/commit", func(c *gin.Context) {
-
-		// handle webhook
-
-	})
-
-	return r
-}
-
 type DbEntry struct {
 	Date string
 	Repo string
@@ -59,17 +46,24 @@ type DbEntry struct {
 }
 
 type RequestBody struct {
-	idk string
+	Test string `json:"test"`
 }
 
-func HandleWebhookRequest(ctx context.Context, requestBody RequestBody) {
-	lc, _:= lambdacontext.FromContext(ctx)
-	body, err := json.MarshalIndent(requestBody)
+func HandleWebhookRequest(ctx context.Context, req events.LambdaFunctionURLRequest) (string, error) {
+	var body RequestBody
+
+	err := json.Unmarshal([]byte(req.Body), &body)
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	fmt.Println(body.Test)
+
+	return "success", nil
 }
 
 // https://docs.github.com/en/webhooks-and-events/webhooks/creating-webhooks#setting-up-a-webhook
 func main() {
-	router := createRouter()
-	router.Run(":8080")
 	lambda.Start(HandleWebhookRequest)
 }
