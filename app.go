@@ -1,12 +1,8 @@
 package main
 
 import (
-	"net/http"
 	"context"
-	"log"
 	"os"
-	"io/ioutil"
-	"regexp"
 	"fmt"
 	"github.com/nleeper/goment"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -26,23 +22,6 @@ func createCurrDateString() {
 	}
 
 	fmt.Println(d.Format("YYYY-MM-DD"))
-}
-
-func checkContributionFromHtml() {
-	resp, err := http.Get("https://github.com/xavier-kong/")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	sb := string(body)
-
-	re, err := regexp.Compile(`\d+ contributions? on Monday, March 27, 2023`)
-
-	fmt.Println(re.FindStringSubmatch(sb))
-
 }
 
 type DbEntry struct {
