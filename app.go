@@ -12,20 +12,19 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"encoding/json"
-	"github.com/joho/godotenv"
 )
 
-func createCurrDateString() {
+func createCurrDateString() string {
 	d, err := goment.New()
 	if err != nil {
 		fmt.Println("error with goment")
 	}
 
-	fmt.Println(d.Format("YYYY-MM-DD"))
+	return d.Format("YYYY-MM-DD")
 }
 
 type DbEntry struct {
-	Date string
+	Date string `json:"date"`
 	Repo string
 	NumCommits int16
 }
@@ -53,13 +52,21 @@ func HandleWebhookRequest(ctx context.Context, req events.LambdaFunctionURLReque
 
 	dynamoSession := createDynamoSession()
 
-	err = godotenv.Load(".env")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	dbEntry := DbEntry{
+		Date: createCurrDateString(),
+	}
+
+	bodyMap, err := dynamodbattribute.MarshalMap(dbEntry)
 
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
-	bodyMap, err := dynamodbattribute.MarshalMap(body)
+	fmt.Println(bodyMap)
 
 	input := &dynamodb.PutItemInput{
 		Item: bodyMap,
@@ -68,6 +75,9 @@ func HandleWebhookRequest(ctx context.Context, req events.LambdaFunctionURLReque
 
 	_, err = dynamoSession.PutItem(input)
 
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 
 	return "success", nil
 }
