@@ -62,6 +62,7 @@ func HandleWebhookRequest(ctx context.Context, req events.LambdaFunctionURLReque
 	}
 
 	if body.Repository.Name == "" {
+		fmt.Println("no repo name")
 		return "no repo name", nil
 	}
 
