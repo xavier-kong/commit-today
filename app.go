@@ -5,13 +5,16 @@ import (
 	"os"
 	"fmt"
 	"github.com/nleeper/goment"
-	"github.com/aws/aws-lambda-go/lambda"
+	//"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"encoding/json"
+	"log"
+	"net/http"
+	"io/ioutil"
 )
 
 func createCurrDateString() string {
@@ -83,6 +86,21 @@ func HandleWebhookRequest(ctx context.Context, req events.LambdaFunctionURLReque
 }
 
 // https://docs.github.com/en/webhooks-and-events/webhooks/creating-webhooks#setting-up-a-webhook
+//func main() {
+//lambda.Start(HandleWebhookRequest)
+//}
+
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+	log.Println(string(body))
+}
+
 func main() {
-	lambda.Start(HandleWebhookRequest)
+	http.HandleFunc("/", handler)
+	fmt.Println("started")
+	log.Fatal(http.ListenAndServe(":3000", nil))
 }
