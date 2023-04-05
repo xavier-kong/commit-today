@@ -5,16 +5,13 @@ import (
 	"os"
 	"fmt"
 	"github.com/nleeper/goment"
-	//"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"encoding/json"
-	"log"
-	"net/http"
-	"io/ioutil"
 )
 
 func createCurrDateString() string {
@@ -29,11 +26,14 @@ func createCurrDateString() string {
 type DbEntry struct {
 	Date string `json:"date"`
 	Repo string
-	NumCommits int16
+}
+
+type Repository struct {
+	Name string
 }
 
 type RequestBody struct {
-	Test string `json:"test"`
+	Repository Repository `json:"repository"`
 }
 
 func createDynamoSession() *dynamodb.DynamoDB {
@@ -51,16 +51,23 @@ func HandleWebhookRequest(ctx context.Context, req events.LambdaFunctionURLReque
 
 	if err != nil {
 		fmt.Println(err.Error())
+		return err.Error(), err
 	}
 
 	dynamoSession := createDynamoSession()
 
 	if err != nil {
 		fmt.Println(err.Error())
+		return err.Error(), err
+	}
+
+	if body.Repository.Name == "" {
+		return "no repo name", nil
 	}
 
 	dbEntry := DbEntry{
 		Date: createCurrDateString(),
+		Repo: body.Repository.Name,
 	}
 
 	bodyMap, err := dynamodbattribute.MarshalMap(dbEntry)
@@ -85,29 +92,7 @@ func HandleWebhookRequest(ctx context.Context, req events.LambdaFunctionURLReque
 	return "success", nil
 }
 
-// https://docs.github.com/en/webhooks-and-events/webhooks/creating-webhooks#setting-up-a-webhook
-//func main() {
-//lambda.Start(HandleWebhookRequest)
-//}
-
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		panic(err)
-	}
-
-	responseBody := body
-	var data map[string]interface{}
-	err = json.Unmarshal([]byte(responseBody), &data)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(data)
-}
-
+//https://docs.github.com/en/webhooks-and-events/webhooks/creating-webhooks#setting-up-a-webhook
 func main() {
-	http.HandleFunc("/", handler)
-	fmt.Println("started")
-	log.Fatal(http.ListenAndServe(":3000", nil))
+	lambda.Start(HandleWebhookRequest)
 }
