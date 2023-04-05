@@ -96,7 +96,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	log.Println(string(body))
+
+	responseBody := body
+	var data map[string]interface{}
+	err = json.Unmarshal([]byte(responseBody), &data)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(data)
 }
 
 func main() {
