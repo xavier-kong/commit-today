@@ -14,6 +14,10 @@ import (
 	"encoding/json"
 )
 
+func verifySignature() {
+
+}
+
 func createCurrDateString() string {
 	d, err := goment.New()
 	if err != nil {
@@ -44,7 +48,39 @@ func createDynamoSession() *dynamodb.DynamoDB {
 	return dynamodb.New(sess)
 }
 
+func verifyOrigin(req *events.LambdaFunctionURLRequest) bool {
+	isVerified := false
+
+	var signature string
+
+	signature, ok := req.Headers["x-hub-signature-256"]
+
+	if !ok || len(signature) == 0 {
+		fmt.Println("no signature found in header")
+		return isVerified
+	}
+
+	secret := os.Getenv("TABLE_NAME")
+
+	hash := hmac.New(sha256.New, []byte(secret))
+
+	if _, err := hash.Write(b); err != nil {
+
+	}
+
+
+	return isVerified
+}
+
+
 func HandleWebhookRequest(ctx context.Context, req events.LambdaFunctionURLRequest) (string, error) {
+	isVerified := verifyOrigin()
+
+
+	if isVerified == false {
+		return "verification error", nil
+	}
+
 	var body RequestBody
 
 	err := json.Unmarshal([]byte(req.Body), &body)
@@ -76,8 +112,6 @@ func HandleWebhookRequest(ctx context.Context, req events.LambdaFunctionURLReque
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-
-	fmt.Println(bodyMap)
 
 	input := &dynamodb.PutItemInput{
 		Item: bodyMap,
