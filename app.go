@@ -54,7 +54,7 @@ func createDynamoSession() *dynamodb.DynamoDB {
 }
 
 func ComputeExpectedSHA256Hash(data []byte) string {
-	secret := os.Getenv("GTIHUB_WEBHOOK_SECRET")
+	secret := os.Getenv("GITHUB_WEBHOOK_SECRET")
 
 	if secret == "" {
 		fmt.Println("no secret found")
