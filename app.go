@@ -86,6 +86,10 @@ func verifyOrigin(req *events.LambdaFunctionURLRequest) (isVerified bool) {
 		return
 	}
 
+	fmt.Println("sig", signature)
+	fmt.Println("body", req.Body)
+	fmt.Println("calc", expectedHash)
+
 	isVerified = hmac.Equal([]byte(signature), []byte(expectedHash))
 
 	if !isVerified {
