@@ -17,8 +17,8 @@ import (
 	"encoding/base64"
 	"crypto/hmac"
 	"encoding/hex"
-	"strings"
-	"io/ioutil"
+	/*"strings"
+	"io/ioutil"*/
 )
 
 func createCurrDateString() string {
@@ -62,11 +62,6 @@ func ComputeExpectedSHA256Hash(data []byte) string {
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write(data)
 
-	/*h := sha256.New()
-	h.Write(data)
-	h.Write([]byte(secret))*/
-	//return "sha256=" + hex.EncodeToString(h.Sum(nil))
-
 	return "sha256=" + hex.EncodeToString(mac.Sum(nil))
 }
 
@@ -82,7 +77,7 @@ func verifyOrigin(req *events.LambdaFunctionURLRequest) (isVerified bool) {
 		return
 	}
 
-	bodyReader := strings.NewReader(req.Body)
+	/*bodyReader := strings.NewReader(req.Body)
 
 	payload, _ := ioutil.ReadAll(bodyReader)
 
@@ -92,7 +87,7 @@ func verifyOrigin(req *events.LambdaFunctionURLRequest) (isVerified bool) {
 
 	mac.Write(payload)
 
-	expectedSignature := "sha256=" + hex.EncodeToString(mac.Sum(nil))
+	expectedSignature := "sha256=" + hex.EncodeToString(mac.Sum(nil))*/
 
 	expectedHash := ComputeExpectedSHA256Hash([]byte(req.Body))
 
@@ -101,12 +96,7 @@ func verifyOrigin(req *events.LambdaFunctionURLRequest) (isVerified bool) {
 		return
 	}
 
-	fmt.Println("sig", signature)
-	fmt.Println("body", req.Body)
-	fmt.Println("old", expectedHash)
-	fmt.Println("new", expectedSignature)
-
-	isVerified = hmac.Equal([]byte(signature), []byte(expectedSignature))
+	isVerified = hmac.Equal([]byte(signature), []byte(expectedHash))
 
 	if !isVerified {
 		fmt.Println("hashes are not equal")
