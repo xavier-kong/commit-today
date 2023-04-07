@@ -12,6 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"encoding/json"
+	"crypto/sha256"
+	"crypto/rand"
+	"encoding/base64"
+	"crypto/hmac"
+	"encoding/hex"
 )
 
 func verifySignature() {
@@ -48,8 +53,22 @@ func createDynamoSession() *dynamodb.DynamoDB {
 	return dynamodb.New(sess)
 }
 
-func verifyOrigin(req *events.LambdaFunctionURLRequest) bool {
-	isVerified := false
+func ComputeExpectedSHA256Hash(data []byte) string {
+	secret := os.Getenv("GTIHUB_WEBHOOK_SECRET")
+
+	if secret == "" {
+		fmt.Println("no secret found")
+		return ""
+	}
+
+	h := sha256.New()
+	h.Write(data)
+	h.Write([]byte(secret))
+	return "sha256=" + hex.EncodeToString(h.Sum(nil))
+}
+
+func verifyOrigin(req *events.LambdaFunctionURLRequest) (isVerified bool) {
+	isVerified = false
 
 	var signature string
 
@@ -57,25 +76,28 @@ func verifyOrigin(req *events.LambdaFunctionURLRequest) bool {
 
 	if !ok || len(signature) == 0 {
 		fmt.Println("no signature found in header")
-		return isVerified
+		return
 	}
 
-	secret := os.Getenv("TABLE_NAME")
+	expectedHash := ComputeExpectedSHA256Hash([]byte(req.Body))
 
-	hash := hmac.New(sha256.New, []byte(secret))
-
-	if _, err := hash.Write(b); err != nil {
-
+	if expectedHash == "" {
+		fmt.Println("no hash calculated")
+		return
 	}
 
+	isVerified = hmac.Equal([]byte(signature), []byte(expectedHash))
 
-	return isVerified
+	if !isVerified {
+		fmt.Println("hashes are not equal")
+	}
+
+	return
 }
 
 
 func HandleWebhookRequest(ctx context.Context, req events.LambdaFunctionURLRequest) (string, error) {
-	isVerified := verifyOrigin()
-
+	isVerified := verifyOrigin(&req)
 
 	if isVerified == false {
 		return "verification error", nil
@@ -125,6 +147,28 @@ func HandleWebhookRequest(ctx context.Context, req events.LambdaFunctionURLReque
 	}
 
 	return "success", nil
+}
+
+func GenerateHighEntropyString(length int) (string, error) {
+	// Determine the required number of bytes
+	byteLength := length * 3 / 4
+	if length%4 != 0 {
+		byteLength++
+	}
+
+	// Generate a random byte slice
+	bytes := make([]byte, byteLength)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+
+	// Encode the byte slice as a base64 string
+	encoded := base64.RawURLEncoding.EncodeToString(bytes)
+
+	// Truncate the string to the desired length
+	fmt.Println(encoded[:length])
+	return encoded[:length], nil
 }
 
 //https://docs.github.com/en/webhooks-and-events/webhooks/creating-webhooks#setting-up-a-webhook
