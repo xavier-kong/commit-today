@@ -57,7 +57,7 @@ func ComputeExpectedSHA256Hash(data []byte) string {
 	secret := os.Getenv("GITHUB_WEBHOOK_SECRET")
 
 	if secret == "" {
-		fmt.Println("no secret found")
+		fmt.Println("Error: no secret found")
 		return ""
 	}
 
@@ -75,14 +75,14 @@ func verifyOrigin(req *events.LambdaFunctionURLRequest) (isVerified bool) {
 	signature, ok := req.Headers["x-hub-signature-256"]
 
 	if !ok || len(signature) == 0 {
-		fmt.Println("no signature found in header")
+		fmt.Println("Error: no signature found in header")
 		return
 	}
 
 	expectedHash := ComputeExpectedSHA256Hash([]byte(req.Body))
 
 	if expectedHash == "" {
-		fmt.Println("no hash calculated")
+		fmt.Println("Error: no hash calculated")
 		return
 	}
 
