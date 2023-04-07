@@ -17,11 +17,9 @@ import (
 	"encoding/base64"
 	"crypto/hmac"
 	"encoding/hex"
+	"strings"
+	"io/ioutil"
 )
-
-func verifySignature() {
-
-}
 
 func createCurrDateString() string {
 	d, err := goment.New()
@@ -61,10 +59,15 @@ func ComputeExpectedSHA256Hash(data []byte) string {
 		return ""
 	}
 
-	h := sha256.New()
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write(data)
+
+	/*h := sha256.New()
 	h.Write(data)
-	h.Write([]byte(secret))
-	return "sha256=" + hex.EncodeToString(h.Sum(nil))
+	h.Write([]byte(secret))*/
+	//return "sha256=" + hex.EncodeToString(h.Sum(nil))
+
+	return "sha256=" + hex.EncodeToString(mac.Sum(nil))
 }
 
 func verifyOrigin(req *events.LambdaFunctionURLRequest) (isVerified bool) {
@@ -79,6 +82,18 @@ func verifyOrigin(req *events.LambdaFunctionURLRequest) (isVerified bool) {
 		return
 	}
 
+	bodyReader := strings.NewReader(req.Body)
+
+	payload, _ := ioutil.ReadAll(bodyReader)
+
+	secretKey := os.Getenv("GITHUB_WEBHOOK_SECRET")
+
+	mac := hmac.New(sha256.New, []byte(secretKey))
+
+	mac.Write(payload)
+
+	expectedSignature := "sha256=" + hex.EncodeToString(mac.Sum(nil))
+
 	expectedHash := ComputeExpectedSHA256Hash([]byte(req.Body))
 
 	if expectedHash == "" {
@@ -88,9 +103,10 @@ func verifyOrigin(req *events.LambdaFunctionURLRequest) (isVerified bool) {
 
 	fmt.Println("sig", signature)
 	fmt.Println("body", req.Body)
-	fmt.Println("calc", expectedHash)
+	fmt.Println("old", expectedHash)
+	fmt.Println("new", expectedSignature)
 
-	isVerified = hmac.Equal([]byte(signature), []byte(expectedHash))
+	isVerified = hmac.Equal([]byte(signature), []byte(expectedSignature))
 
 	if !isVerified {
 		fmt.Println("hashes are not equal")
