@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"os"
 	"time"
-
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -19,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/nleeper/goment"
+	"strconv"
 	/*"strings"
 	"io/ioutil"*/)
 
@@ -92,7 +92,7 @@ import (
 	}
 
 	type DbEntry struct {
-		Date int64 `json:"date"`
+		Date string `json:"date"`
 		Repo string `json:"repo"`
 	}
 
@@ -100,7 +100,7 @@ import (
 		dynamoSession := createDynamoSession()
 
 		dbEntry := DbEntry{
-			Date: time.Now().UnixMilli(),
+			Date: strconv.FormatInt(time.Now().UnixMilli(), 10),
 			Repo: repoName,
 		}
 
@@ -108,6 +108,7 @@ import (
 
 		if err != nil {
 			fmt.Println(err.Error())
+			return
 		}
 
 		input := &dynamodb.PutItemInput{
