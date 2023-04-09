@@ -93,6 +93,7 @@ func verifyOrigin(req *events.LambdaFunctionURLRequest) (isVerified bool) {
 type DbEntry struct {
 	Date string `json:"date"`
 	Repo string `json:"repo"`
+	DateString string `json:"dateString"`
 }
 
 func WriteToDb(repoName string) {
@@ -101,6 +102,7 @@ func WriteToDb(repoName string) {
 	dbEntry := DbEntry{
 		Date: strconv.FormatInt(time.Now().UnixMilli(), 10),
 		Repo: repoName,
+		DateString: createCurrDateString(),
 	}
 
 	bodyMap, err := dynamodbattribute.MarshalMap(dbEntry)
