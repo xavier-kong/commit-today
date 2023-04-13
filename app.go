@@ -124,6 +124,10 @@ func WriteToDb(repoName string) {
 	}
 }
 
+func HandleNewRepos() {
+
+}
+
 func HandleWebhookRequest(ctx context.Context, req events.LambdaFunctionURLRequest) (string, error) {
 	isVerified := verifyOrigin(&req)
 
